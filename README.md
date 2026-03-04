@@ -1,4 +1,4 @@
-# himawari_hsd2nc
+﻿# himawari_hsd2nc
 
 Native Himawari HSD to NetCDF converter (ROI-first, no reprojection).
 
