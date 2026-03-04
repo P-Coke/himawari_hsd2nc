@@ -1,0 +1,6 @@
+include README.md
+include LICENSE
+include THIRD_PARTY_NOTICES.md
+include pyproject.toml
+recursive-include src/himawari_hsd2nc/bin *
+recursive-include src/himawari_hsd2nc *.typed

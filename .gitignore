@@ -1,0 +1,42 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.venv/
+venv/
+
+# Build artifacts
+build/
+dist/
+wheelhouse/
+*.egg-info/
+
+# Local runtime logs/temp
+*.stdout.log
+*.stderr.log
+*.tmp.nc
+
+# OS/editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+
+# Project temp data
+data/
+test/
+output/
+
+# Linux build intermediate
+build_tools/linux_runtime_builder/build/
+build_tools/linux_runtime_builder/bin/
+build_tools/linux_runtime_builder/offline_package/
+build_tools/linux_runtime_builder/offline_package.tar.gz
+
+# Backend local builds
+src/fortran/build/
+src/fortran/bin/
