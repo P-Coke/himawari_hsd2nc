@@ -25,12 +25,14 @@ if (!(Test-Path $reader)) {
 }
 
 $env:PATH = "$mingwBin;$env:PATH"
+$mingwRoot = Split-Path -Parent $mingwBin
+$makeLibDir = ($mingwRoot -replace '\\','/')
 
 Write-Host "[1/4] Build AHI binaries..."
 Push-Location $reader
 try {
-    mingw32-make clean
-    mingw32-make AHI AHI_FAST AHI_FAST_ROI
+    mingw32-make "LIBDIR=$makeLibDir" clean
+    mingw32-make "LIBDIR=$makeLibDir" AHI AHI_FAST AHI_FAST_ROI
 } finally {
     Pop-Location
 }

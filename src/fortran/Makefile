@@ -5,11 +5,36 @@ SRC_DIR := $(ROOT_DIR)/src
 BUILD_DIR := $(ROOT_DIR)/build
 BIN_DIR := $(ROOT_DIR)/bin
 
-LIBDIR ?= D:/Scoop/apps/msys2/current/mingw64
+LIBDIR ?=
+NETCDF_FFLAGS ?= $(shell nf-config --fflags 2>/dev/null)
+NETCDF_FLIBS ?= $(shell nf-config --flibs 2>/dev/null)
+HDF5_CFLAGS ?= $(shell pkg-config --cflags hdf5 2>/dev/null)
+HDF5_LIBS ?= $(shell pkg-config --libs hdf5 2>/dev/null)
 
-INCDIRS := -I$(LIBDIR)/include -I$(BUILD_DIR)
-LIBDIRS := -L$(LIBDIR)/lib
-LINKS := -lhdf5 -lhdf5_fortran -lhdf5_hl_fortran -lnetcdff -lnetcdf -lm -fopenmp
+ifeq ($(strip $(NETCDF_FFLAGS)),)
+ifneq ($(strip $(LIBDIR)),)
+NETCDF_FFLAGS := -I$(LIBDIR)/include
+endif
+endif
+
+ifeq ($(strip $(NETCDF_FLIBS)),)
+ifneq ($(strip $(LIBDIR)),)
+NETCDF_FLIBS := -L$(LIBDIR)/lib -lnetcdff -lnetcdf
+else
+NETCDF_FLIBS := -lnetcdff -lnetcdf
+endif
+endif
+
+ifeq ($(strip $(HDF5_LIBS)),)
+ifneq ($(strip $(LIBDIR)),)
+HDF5_LIBS := -L$(LIBDIR)/lib -lhdf5 -lhdf5_fortran -lhdf5_hl_fortran
+else
+HDF5_LIBS := -lhdf5 -lhdf5_fortran -lhdf5_hl_fortran
+endif
+endif
+
+INCDIRS := $(NETCDF_FFLAGS) $(HDF5_CFLAGS) -I$(BUILD_DIR)
+LINKS := $(NETCDF_FLIBS) $(HDF5_LIBS) -lm -fopenmp
 
 CC := gcc
 F90 := gfortran
@@ -47,13 +72,13 @@ $(LIB_SOL): $(OBJ_SOLPOS)
 	ar -rs $@ $^
 
 $(BIN_DIR)/AHI: $(OBJ_COMMON) $(BUILD_DIR)/AHI_Example.o $(LIB_HIM) $(LIB_SOL)
-	$(F90) -o $@ $(OBJ_COMMON) $(BUILD_DIR)/AHI_Example.o $(LIB_HIM) $(LIB_SOL) $(F90FLAGS) $(INCDIRS) $(LIBDIRS) $(LINKS)
+	$(F90) -o $@ $(OBJ_COMMON) $(BUILD_DIR)/AHI_Example.o $(LIB_HIM) $(LIB_SOL) $(F90FLAGS) $(INCDIRS) $(LINKS)
 
 $(BIN_DIR)/AHI_FAST: $(OBJ_COMMON) $(BUILD_DIR)/AHI_FAST_Example.o $(LIB_HIM) $(LIB_SOL)
-	$(F90) -o $@ $(OBJ_COMMON) $(BUILD_DIR)/AHI_FAST_Example.o $(LIB_HIM) $(LIB_SOL) $(F90FLAGS) $(INCDIRS) $(LIBDIRS) $(LINKS)
+	$(F90) -o $@ $(OBJ_COMMON) $(BUILD_DIR)/AHI_FAST_Example.o $(LIB_HIM) $(LIB_SOL) $(F90FLAGS) $(INCDIRS) $(LINKS)
 
 $(BIN_DIR)/AHI_FAST_ROI: $(OBJ_COMMON) $(BUILD_DIR)/AHI_FAST_Example.o $(LIB_HIM) $(LIB_SOL)
-	$(F90) -o $@ $(OBJ_COMMON) $(BUILD_DIR)/AHI_FAST_Example.o $(LIB_HIM) $(LIB_SOL) $(F90FLAGS) $(INCDIRS) $(LIBDIRS) $(LINKS)
+	$(F90) -o $@ $(OBJ_COMMON) $(BUILD_DIR)/AHI_FAST_Example.o $(LIB_HIM) $(LIB_SOL) $(F90FLAGS) $(INCDIRS) $(LINKS)
 
 $(BUILD_DIR)/%.o: $(SRC_DIR)/%.f90 | dirs
 	$(F90) -c -o $@ $(F90FLAGS) $(F90MOD) $(INCDIRS) $<

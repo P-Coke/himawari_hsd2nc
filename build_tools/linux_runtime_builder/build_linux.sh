@@ -211,13 +211,10 @@ if [[ -z "${NETCDF_FFLAGS}" || -z "${NETCDF_FLIBS}" ]]; then
   fi
 fi
 
-# Fallback for distros where pkg-config/nf-config is incomplete:
-# locate netcdf.mod directly and inject include/library flags.
-if [[ -z "${NETCDF_FFLAGS}" ]] || ! find /usr /usr/local -name netcdf.mod -print -quit >/dev/null 2>&1; then
-  NETCDF_MOD_DIR="$(find /usr /usr/local -name netcdf.mod -print 2>/dev/null | head -n1 | xargs -r dirname || true)"
-  if [[ -n "${NETCDF_MOD_DIR:-}" ]]; then
-    NETCDF_FFLAGS="${NETCDF_FFLAGS} -I${NETCDF_MOD_DIR}"
-  fi
+# Ensure netcdf.mod include path is always present (some distros return incomplete flags).
+NETCDF_MOD_DIR="$(find /usr /usr/local -name netcdf.mod -print 2>/dev/null | head -n1 | xargs -r dirname || true)"
+if [[ -n "${NETCDF_MOD_DIR:-}" ]] && [[ " ${NETCDF_FFLAGS} " != *" -I${NETCDF_MOD_DIR} "* ]]; then
+  NETCDF_FFLAGS="${NETCDF_FFLAGS} -I${NETCDF_MOD_DIR}"
 fi
 if [[ -z "${NETCDF_FLIBS}" ]]; then
   NETCDF_FLIBS="-lnetcdff -lnetcdf"
