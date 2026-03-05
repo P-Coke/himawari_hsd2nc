@@ -15,7 +15,6 @@ $mingwBin = $null
 foreach ($c in $mingwCandidates) {
     if (Test-Path $c) { $mingwBin = $c; break }
 }
-$objdump = Join-Path $mingwBin "objdump.exe"
 
 if (-not $mingwBin) {
     throw "mingw64 bin not found. Set env MINGW_BIN or install MSYS2 mingw64."
@@ -26,11 +25,16 @@ if (!(Test-Path $reader)) {
 
 $env:PATH = "$mingwBin;$env:PATH"
 $mingwRoot = Split-Path -Parent $mingwBin
-$makeLibDir = ($mingwRoot -replace '\\','/')
+$toolchainRoot = $mingwRoot
 $incDirs = New-Object System.Collections.Generic.List[string]
-$incDirs.Add("$makeLibDir/include") | Out-Null
-$incDirs.Add("$makeLibDir/lib/gfortran/modules") | Out-Null
-$incDirs.Add("$makeLibDir/lib") | Out-Null
+$candidateInc = @(
+    "$mingwRoot/include",
+    "$mingwRoot/lib/gfortran/modules",
+    "$mingwRoot/lib"
+)
+foreach ($d in $candidateInc) {
+    if (Test-Path $d) { $incDirs.Add(($d -replace '\\','/')) | Out-Null }
+}
 
 function Find-NetcdfMod {
     param([string[]]$Roots)
@@ -43,7 +47,7 @@ function Find-NetcdfMod {
     return $null
 }
 
-$searchRoots = @($mingwRoot, "C:\msys64", "D:\a\_temp\msys64")
+$searchRoots = @($mingwRoot, "C:\msys64\mingw64", "D:\a\_temp\msys64\mingw64", "C:\mingw64", "C:\msys64", "D:\a\_temp\msys64")
 $netcdfMod = Find-NetcdfMod -Roots $searchRoots
 if (-not $netcdfMod) {
     $bashExe = Join-Path (Split-Path -Parent $mingwRoot) "usr\bin\bash.exe"
@@ -54,18 +58,50 @@ if (-not $netcdfMod) {
     }
 }
 if ($netcdfMod) {
-    $incDirs.Add(((Split-Path -Parent $netcdfMod.FullName) -replace '\\','/')) | Out-Null
+    $modDir = Split-Path -Parent $netcdfMod.FullName
+    $incDirs.Add(($modDir -replace '\\','/')) | Out-Null
+    $modParent = Split-Path -Parent $modDir
+    if ((Split-Path -Leaf $modParent).ToLower() -eq "mingw64") {
+        $toolchainRoot = $modParent
+    }
 } else {
     Write-Warning "netcdf.mod not found; build may fail. Checked: $($searchRoots -join ', ')"
+}
+$makeLibDir = ($toolchainRoot -replace '\\','/')
+$libDir = "$toolchainRoot\lib"
+if (-not (Test-Path "$toolchainRoot\bin")) {
+    $toolchainRoot = $mingwRoot
+    $makeLibDir = ($toolchainRoot -replace '\\','/')
+    $libDir = "$toolchainRoot\lib"
+}
+if (Test-Path "$toolchainRoot\bin") {
+    $env:PATH = "$toolchainRoot\bin;$env:PATH"
+}
+if (-not (Test-Path $libDir)) {
+    $libDir = "$mingwRoot\lib"
+}
+$makeLinkDir = ($libDir -replace '\\','/')
+$objdump = Join-Path $toolchainRoot "bin\objdump.exe"
+if (-not (Test-Path $objdump)) {
+    $objdumpCmd = Get-Command objdump.exe -ErrorAction SilentlyContinue
+    if ($objdumpCmd) {
+        $objdump = $objdumpCmd.Source
+    } else {
+        throw "objdump.exe not found under $toolchainRoot\bin and not available in PATH."
+    }
 }
 $uniqInc = $incDirs | Select-Object -Unique
 $netcdfFflags = (($uniqInc | ForEach-Object { "-I$_" }) -join " ")
 $makeArgs = @(
     "LIBDIR=$makeLibDir",
     "NETCDF_FFLAGS=$netcdfFflags",
-    "NETCDF_FLIBS=-L$makeLibDir/lib -lnetcdff -lnetcdf"
+    "NETCDF_FLIBS=-L$makeLinkDir -lnetcdff -lnetcdf",
+    "HDF5_LIBS=-L$makeLinkDir -lhdf5 -lhdf5_fortran -lhdf5_hl_fortran"
 )
+Write-Host "Using toolchain root: $toolchainRoot"
 Write-Host "Using NETCDF_FFLAGS=$netcdfFflags"
+Write-Host "Using link dir: $makeLinkDir"
+Write-Host "Using objdump: $objdump"
 
 Write-Host "[1/4] Build AHI binaries..."
 Push-Location $reader
