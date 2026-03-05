@@ -27,16 +27,22 @@ if (!(Test-Path $reader)) {
 $env:PATH = "$mingwBin;$env:PATH"
 $mingwRoot = Split-Path -Parent $mingwBin
 $makeLibDir = ($mingwRoot -replace '\\','/')
+$incDirs = New-Object System.Collections.Generic.List[string]
+$incDirs.Add("$makeLibDir/include") | Out-Null
+$incDirs.Add("$makeLibDir/lib/gfortran/modules") | Out-Null
+$incDirs.Add("$makeLibDir/lib") | Out-Null
 $netcdfMod = Get-ChildItem -Path $mingwRoot -Filter "netcdf.mod" -Recurse -ErrorAction SilentlyContinue | Select-Object -First 1
-if (-not $netcdfMod) {
-    throw "netcdf.mod not found under $mingwRoot. Ensure mingw-w64-x86_64-netcdf-fortran is installed."
+if ($netcdfMod) {
+    $incDirs.Add(((Split-Path -Parent $netcdfMod.FullName) -replace '\\','/')) | Out-Null
 }
-$netcdfIncDir = ((Split-Path -Parent $netcdfMod.FullName) -replace '\\','/')
+$uniqInc = $incDirs | Select-Object -Unique
+$netcdfFflags = (($uniqInc | ForEach-Object { "-I$_" }) -join " ")
 $makeArgs = @(
     "LIBDIR=$makeLibDir",
-    "NETCDF_FFLAGS=-I$netcdfIncDir",
+    "NETCDF_FFLAGS=$netcdfFflags",
     "NETCDF_FLIBS=-L$makeLibDir/lib -lnetcdff -lnetcdf"
 )
+Write-Host "Using NETCDF_FFLAGS=$netcdfFflags"
 
 Write-Host "[1/4] Build AHI binaries..."
 Push-Location $reader

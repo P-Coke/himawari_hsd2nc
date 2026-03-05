@@ -63,6 +63,7 @@ test-command = "python -c \"import himawari_hsd2nc; print('import ok')\""
 
 [tool.cibuildwheel.linux]
 archs = ["x86_64"]
+repair-wheel-command = ""
 
 [tool.cibuildwheel.windows]
 archs = ["AMD64"]
