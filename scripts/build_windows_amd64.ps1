@@ -31,9 +31,32 @@ $incDirs = New-Object System.Collections.Generic.List[string]
 $incDirs.Add("$makeLibDir/include") | Out-Null
 $incDirs.Add("$makeLibDir/lib/gfortran/modules") | Out-Null
 $incDirs.Add("$makeLibDir/lib") | Out-Null
-$netcdfMod = Get-ChildItem -Path $mingwRoot -Filter "netcdf.mod" -Recurse -ErrorAction SilentlyContinue | Select-Object -First 1
+
+function Find-NetcdfMod {
+    param([string[]]$Roots)
+    foreach ($r in $Roots) {
+        if (Test-Path $r) {
+            $m = Get-ChildItem -Path $r -Filter "netcdf.mod" -Recurse -ErrorAction SilentlyContinue | Select-Object -First 1
+            if ($m) { return $m }
+        }
+    }
+    return $null
+}
+
+$searchRoots = @($mingwRoot, "C:\msys64", "D:\a\_temp\msys64")
+$netcdfMod = Find-NetcdfMod -Roots $searchRoots
+if (-not $netcdfMod) {
+    $bashExe = Join-Path (Split-Path -Parent $mingwRoot) "usr\bin\bash.exe"
+    if (Test-Path $bashExe) {
+        Write-Host "netcdf.mod missing, installing netcdf packages via MSYS2..."
+        & $bashExe -lc "pacman -S --noconfirm --needed mingw-w64-x86_64-netcdf mingw-w64-x86_64-netcdf-fortran"
+        $netcdfMod = Find-NetcdfMod -Roots $searchRoots
+    }
+}
 if ($netcdfMod) {
     $incDirs.Add(((Split-Path -Parent $netcdfMod.FullName) -replace '\\','/')) | Out-Null
+} else {
+    Write-Warning "netcdf.mod not found; build may fail. Checked: $($searchRoots -join ', ')"
 }
 $uniqInc = $incDirs | Select-Object -Unique
 $netcdfFflags = (($uniqInc | ForEach-Object { "-I$_" }) -join " ")
