@@ -1,7 +1,16 @@
 from setuptools import setup
+from setuptools.dist import Distribution
 
 
 cmdclass = {}
+
+
+class BinaryDistribution(Distribution):
+    # Force non-pure wheel so Linux auditwheel can repair to manylinux tags.
+    def has_ext_modules(self):
+        return True
+
+
 try:
     # Force platform wheel tags because we bundle native executables.
     from wheel.bdist_wheel import bdist_wheel as _bdist_wheel
@@ -15,4 +24,4 @@ try:
 except Exception:
     pass
 
-setup(cmdclass=cmdclass)
+setup(cmdclass=cmdclass, distclass=BinaryDistribution)

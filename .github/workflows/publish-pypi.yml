@@ -55,10 +55,6 @@ jobs:
         env:
           MINGW_BIN: C:\msys64\mingw64\bin
 
-      - name: Build backend binaries (Linux)
-        if: runner.os == 'Linux'
-        run: bash scripts/build_linux_x86_64.sh
-
       - name: Build wheels
         run: python -m cibuildwheel --output-dir dist
 
