@@ -57,7 +57,7 @@ himawari_hsd2nc = ["bin/**/*", "py.typed"]
 
 [tool.cibuildwheel]
 build = "cp310-* cp311-* cp312-*"
-skip = ["pp*", "*-musllinux*"]
+skip = ["*-musllinux*"]
 before-build = "python tools/prepare_wheel_binaries.py"
 test-command = "python -c \"import himawari_hsd2nc; print('import ok')\""
 

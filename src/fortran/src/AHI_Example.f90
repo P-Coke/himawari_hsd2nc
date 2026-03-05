@@ -1,10 +1,3 @@
-!******************************************************************************%
-! *
-! *    Copyright (C) 2016-2019 Simon Proud <simon.proud@physics.ox.ac.uk>
-! *    License: CC BY-NC-ND 4.0
-! *    
-! ******************************************************************************/
-
 ! the output is saved to a netcdf file. The lines below can
 ! be used to read/save specific bands and ancillary data
 

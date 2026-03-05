@@ -60,5 +60,4 @@ Release flow:
 ## Licensing
 
 - Project license: `LICENSE` (MIT)
-- Third-party notice: `THIRD_PARTY_NOTICES.md`
-- Upstream reference license snapshot: `src/fortran/UPSTREAM_LICENSE.md`
+

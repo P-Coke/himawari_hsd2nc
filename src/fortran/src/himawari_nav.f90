@@ -1,10 +1,3 @@
-!******************************************************************************%
-! *
-! *    Copyright (C) 2016-2019 Simon Proud <simon.proud@physics.ox.ac.uk>
-! *    License: CC BY-NC-ND 4.0
-! *
-! ******************************************************************************/
-
 
 module himawari_navigation
 	use himawari

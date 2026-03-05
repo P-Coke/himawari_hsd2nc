@@ -1,11 +1,3 @@
-!******************************************************************************%
-! *
-! *    Copyright (C) 2016-2019 Simon Proud <simon.proud@physics.ox.ac.uk>
-! *    License: CC BY-NC-ND 4.0
-! *
-! ******************************************************************************/
-
-
 !*******************************************************************************
 ! Module containing the Fortran interface to himawari_native_util.  Please see
 ! the comments in the C code for descriptions of the various routines including

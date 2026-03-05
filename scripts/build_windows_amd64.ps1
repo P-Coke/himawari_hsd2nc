@@ -27,12 +27,24 @@ if (!(Test-Path $reader)) {
 $env:PATH = "$mingwBin;$env:PATH"
 $mingwRoot = Split-Path -Parent $mingwBin
 $makeLibDir = ($mingwRoot -replace '\\','/')
+$netcdfMod = Get-ChildItem -Path $mingwRoot -Filter "netcdf.mod" -Recurse -ErrorAction SilentlyContinue | Select-Object -First 1
+if (-not $netcdfMod) {
+    throw "netcdf.mod not found under $mingwRoot. Ensure mingw-w64-x86_64-netcdf-fortran is installed."
+}
+$netcdfIncDir = ((Split-Path -Parent $netcdfMod.FullName) -replace '\\','/')
+$makeArgs = @(
+    "LIBDIR=$makeLibDir",
+    "NETCDF_FFLAGS=-I$netcdfIncDir",
+    "NETCDF_FLIBS=-L$makeLibDir/lib -lnetcdff -lnetcdf"
+)
 
 Write-Host "[1/4] Build AHI binaries..."
 Push-Location $reader
 try {
-    mingw32-make "LIBDIR=$makeLibDir" clean
-    mingw32-make "LIBDIR=$makeLibDir" AHI AHI_FAST AHI_FAST_ROI
+    & mingw32-make @makeArgs clean
+    if ($LASTEXITCODE -ne 0) { throw "mingw32-make clean failed with code $LASTEXITCODE" }
+    & mingw32-make @makeArgs AHI AHI_FAST AHI_FAST_ROI
+    if ($LASTEXITCODE -ne 0) { throw "mingw32-make build failed with code $LASTEXITCODE" }
 } finally {
     Pop-Location
 }
